@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JNTUH R22 3rd Year Results</title>
+    <style>
+        :root {
+            --primary-color: #003366;
+            --secondary-color: #005a9c;
+            --pass-color: #2e7d32;
+            --fail-color: #c62828;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --border-color: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .header h1 {
+            color: var(--primary-color);
+            margin: 0 0 10px 0;
+            font-size: 2.2em;
+        }
+
+        .header p {
+            color: #666;
+            margin: 0;
+            font-size: 1.1em;
+        }
+
+        main {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .result-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .result-card h2 {
+            color: var(--secondary-color);
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-left: 5px solid var(--secondary-color);
+            padding-left: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 12px 15px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .status-pass {
+            color: var(--pass-color);
+            font-weight: bold;
+        }
+
+        .status-fail {
+            color: var(--fail-color);
+            font-weight: bold;
+        }
+
+        .summary {
+            display: flex;
+            justify-content: flex-end;
+            font-size: 1.1em;
+            font-weight: bold;
+            padding-top: 15px;
+            border-top: 2px dashed var(--border-color);
+        }
+
+        .search-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .search-container input {
+            padding: 12px;
+            font-size: 1.1em;
+            width: 300px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            outline: none;
+        }
+        
+        .search-container button {
+            padding: 12px 25px;
+            font-size: 1.1em;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .search-container button:hover {
+            background-color: var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <h1>JNTUH R22 3rd Year B.Tech Results</h1>
+        <p>Computer Science & Engineering</p>
+    </header>
+
+    <div class="search-container">
+        <input type="text" id="hallticket-input" placeholder="Enter Hall Ticket Number" autocomplete="off">
+        <button id="search-btn">Search Result</button>
+    </div>
+
+    <main id="results-container">
+        <!-- JavaScript will inject the result cards here -->
+    </main>
+
+    <script>
+        // Data configuration
+        const subjects = ['ML', 'FLAT', 'AI', 'STM', 'CL'];
+
+        const studentNames = {
+            '23RE1A0576': 'P.Jashwanth',
+            '23RE1A0556': 'M.NARSIMLU',
+            '23RE1A0577': 'P.UDAY GOUD',
+            '23RE1A0559': 'MD. SAMEER PASHA',
+            '23RE1A0585': 'S.MOHAN',
+            '23RE1A0571': 'N.VINAY CHANDER',
+            '23RE1A0595': 'T.Abhilash',
+            '23RE1A05A0': 'Y.Hari Krishna',
+            '23RE1A0587': 'Sirimani Nagaraju',
+            '23RE1A0594': 'Thalari Prem kumar',
+            '23RE1A0596': 'Vadla Chistheshwar',
+            '23RE1A0597': 'Vadla Madhu chary',
+            '23RE1A0588': 'SIRISALA INDRA KUMAR'
+        };
+
+        const MAX_MARKS = 60;
+        const PASS_MARK = 21; // Standard 35% of 60 is 21
+        const FAIL_MARK_MIN = 14;
+        const FAIL_MARK_MAX = 19;
+
+        // Utility to get random integer between min and max (inclusive)
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // Generate and render results
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('results-container');
+            const searchBtn = document.getElementById('search-btn');
+            const htInput = document.getElementById('hallticket-input');
+
+            const resultCache = {}; // Object to store previously generated results
+
+            searchBtn.addEventListener('click', () => {
+                const htno = htInput.value.trim().toUpperCase();
+                
+                if (!htno) {
+                    alert("Please enter a Hall Ticket Number.");
+                    return;
+                }
+
+                // Clear previous result
+                container.innerHTML = '';
+
+                let studentData;
+
+                // Check if we already generated a result for this hall ticket
+                if (resultCache[htno]) {
+                    studentData = resultCache[htno];
+                } else {
+                    studentData = [];
+                    
+                    // Shuffle subjects so the failing subject is random
+                    let shuffledSubjects = [...subjects].sort(() => 0.5 - Math.random());
+                    
+                    if (htno === '23RE1A0588') {
+                        // Special Case: Pass all subjects for this hall ticket
+                        shuffledSubjects.forEach((subject) => {
+                            studentData.push({
+                                subject: subject,
+                                marks: getRandomInt(PASS_MARK, MAX_MARKS)
+                            });
+                        });
+                    } else {
+                        // Default Case: Determine how many subjects to fail (1 or 2)
+                        let numFails = getRandomInt(1, 2);
+
+                        shuffledSubjects.forEach((subject, index) => {
+                            let marksObtained;
+                            
+                            if (index < numFails) {
+                                // Assign fail marks (14 to 19)
+                                marksObtained = getRandomInt(FAIL_MARK_MIN, FAIL_MARK_MAX);
+                            } else {
+                                // Assign pass marks
+                                marksObtained = getRandomInt(PASS_MARK, MAX_MARKS);
+                            }
+
+                            studentData.push({
+                                subject: subject,
+                                marks: marksObtained
+                            });
+                        });
+                    }
+
+                    // Sort back to standard order (alphabetical or original array order)
+                    studentData.sort((a, b) => subjects.indexOf(a.subject) - subjects.indexOf(b.subject));
+                    
+                    // Store in cache for future searches
+                    resultCache[htno] = studentData;
+                }
+
+                // Generate HTML for this student
+                let rowsHtml = '';
+                studentData.forEach(data => {
+                    let isFail = data.marks < PASS_MARK;
+                    let statusText = isFail ? 'FAIL' : 'PASS';
+                    let statusClass = isFail ? 'status-fail' : 'status-pass';
+
+                    rowsHtml += `
+                        <tr>
+                            <td>${data.subject}</td>
+                            <td>${data.marks}</td>
+                            <td>${MAX_MARKS}</td>
+                            <td class="${statusClass}">${statusText}</td>
+                        </tr>
+                    `;
+                });
+
+                let isFailOverall = studentData.some(d => d.marks < PASS_MARK);
+                let overallStatusText = isFailOverall ? 'FAIL' : 'PASS';
+                let overallStatusClass = isFailOverall ? 'status-fail' : 'status-pass';
+                let displayName = studentNames[htno] ? ` | Name: ${studentNames[htno]}` : '';
+
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'result-card';
+                cardDiv.innerHTML = `
+                    <h2>HTNO: ${htno}${displayName}</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Subject Name</th>
+                                <th>Marks Obtained</th>
+                                <th>Max Marks</th>
+                                <th>Result</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                    <div class="summary ${overallStatusClass}">
+                        Overall Result: ${overallStatusText}
+                    </div>
+                `;
+
+                container.appendChild(cardDiv);
+            });
+        });
+    </script>
+</body>
+</html>
